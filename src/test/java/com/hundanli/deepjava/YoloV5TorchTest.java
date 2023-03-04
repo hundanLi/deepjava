@@ -45,6 +45,9 @@ public final class YoloV5TorchTest {
 
     private static final Logger logger = LoggerFactory.getLogger(YoloV5TorchTest.class);
 
+    private final String userDir = System.getProperty("user.dir");
+
+
     @BeforeEach
     void init() throws Exception {
         Loader.load(opencv_java.class);
@@ -52,7 +55,7 @@ public final class YoloV5TorchTest {
 
     @Test
     public void predict() throws IOException, ModelException, TranslateException {
-        Path imageFile = Paths.get("src/test/resources/dog_bike_car.jpg");
+        Path imageFile = Paths.get("src/main/resources/static/dog_bike_car.jpg");
         Image img = ImageFactory.getInstance().fromFile(imageFile);
 
         Engine.getAllEngines().forEach(System.out::println);
@@ -68,7 +71,7 @@ public final class YoloV5TorchTest {
                         .setTypes(Image.class, DetectedObjects.class)
                         .optTranslator(translator)
                         .optDevice(Device.cpu())
-                        .optModelPath(Paths.get("D:\\developer\\project\\Learning\\deepjava\\src\\test\\resources"))
+                        .optModelPath(Paths.get(userDir,"src/main/resources/weights"))
                         .optModelName("yolov5n6")
                         .optEngine("PyTorch")
                         .optProgress(new ProgressBar())
@@ -121,7 +124,7 @@ public final class YoloV5TorchTest {
         DetectedObjects detectedObjects = new DetectedObjects(classNames, probabilities, boundingBoxes);
         img.drawBoundingBoxes(detectedObjects);
 
-        Path imagePath = outputDir.resolve("detected-dog_bike_car.png");
+        Path imagePath = outputDir.resolve("torch-detected-dog_bike_car.png");
         // OpenJDK can't save jpg with alpha channel
         img.save(Files.newOutputStream(imagePath), "png");
         logger.info("Detected objects image has been saved in: {}", imagePath);

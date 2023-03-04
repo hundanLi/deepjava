@@ -35,7 +35,7 @@ public class DarknetYoloV4Tests {
     void testImShow() {
         // Reading the Image from the file/ directory
         String imageLocation
-                = "D:\\data\\filesaas\\sourceImage\\test.png";
+                = "src/main/resources/static/dog_bike_car.jpg";
 
         // Storing the image in a Matrix object
         // of Mat type
@@ -50,7 +50,7 @@ public class DarknetYoloV4Tests {
                 Imgproc.INTER_LANCZOS4);
 
         // Writing the image from src to destination
-        Imgcodecs.imwrite("D:\\data\\filesaas\\lanczos4\\test-resized.png", dst);
+        Imgcodecs.imwrite("target/out/test-resized.png", dst);
         HighGui.imshow("resize", dst);
         HighGui.waitKey();
         // Display message to show that
@@ -62,7 +62,7 @@ public class DarknetYoloV4Tests {
     void testImDetect() throws Exception{
         // 读取类别名称
         String[] names = new String[80];
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream("src/test/resources/coco.names")))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream("src/main/resources/weights/coco.names")))) {
             for (int i = 0; i < names.length; i++) {
                 names[i] = reader.readLine();
             }
@@ -79,8 +79,8 @@ public class DarknetYoloV4Tests {
         try {
             // 指定配置文件和模型文件加载网络
             stopwatch.start();
-            String cfgFile = "src/test/resources/yolov4-tiny.cfg";
-            String weights = "src/test/resources/yolov4-tiny.weights";
+            String cfgFile = "src/main/resources/weights/yolov4-tiny.cfg";
+            String weights = "src/main/resources/weights/yolov4-tiny.weights";
             Net net = Dnn.readNetFromDarknet(cfgFile, weights);
 //            Net net = Dnn.readNet("src/test/resources/yolov5n.onnx");
 //            Net net = Dnn.readNetFromTorch("src/test/resources/yolov5s.torchscript");
@@ -97,7 +97,7 @@ public class DarknetYoloV4Tests {
             System.out.println("config net success");
 
             // 读取要被推理的图片
-            String img_file = "src/test/resources/dog_bike_car.jpg";
+            String img_file = "src/main/resources/static/dog_bike_car.jpg";
             image = Imgcodecs.imread(img_file, Imgcodecs.IMREAD_COLOR);
             if (image.empty()) {
                 System.out.println("read image fail");
@@ -199,7 +199,7 @@ public class DarknetYoloV4Tests {
                         new Scalar(0, 255, 0), 1);
             }
 
-            Path path = Paths.get("D:\\tmp\\darknet\\outs", "out_" + System.currentTimeMillis() + ".jpg");
+            Path path = Paths.get("target/out/", "darknet-out_" + System.currentTimeMillis() + ".jpg");
             FileUtils.forceMkdirParent(path.toFile());
             Imgcodecs.imwrite(path.toString(), image);
             HighGui.imshow("detect", image);

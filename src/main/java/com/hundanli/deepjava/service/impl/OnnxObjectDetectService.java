@@ -1,12 +1,11 @@
-package com.hundanli.deepjava;
+package com.hundanli.deepjava.service.impl;
 
 import ai.djl.Application;
 import ai.djl.Device;
-import ai.djl.ModelException;
-import ai.djl.engine.Engine;
+import ai.djl.MalformedModelException;
+import ai.djl.Model;
 import ai.djl.inference.Predictor;
 import ai.djl.modality.cv.Image;
-import ai.djl.modality.cv.ImageFactory;
 import ai.djl.modality.cv.output.BoundingBox;
 import ai.djl.modality.cv.output.DetectedObjects;
 import ai.djl.modality.cv.output.Rectangle;
@@ -14,18 +13,17 @@ import ai.djl.modality.cv.transform.Resize;
 import ai.djl.modality.cv.transform.ToTensor;
 import ai.djl.modality.cv.translator.YoloV5Translator;
 import ai.djl.repository.zoo.Criteria;
+import ai.djl.repository.zoo.ModelNotFoundException;
 import ai.djl.repository.zoo.ZooModel;
 import ai.djl.training.util.ProgressBar;
-import ai.djl.translate.TranslateException;
-
-import org.bytedeco.javacpp.Loader;
-import org.bytedeco.opencv.opencv_java;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import com.hundanli.deepjava.dto.DetectResultDTO;
+import com.hundanli.deepjava.service.ObjectDetectService;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import lombok.extern.slf4j.Slf4j;
 import org.opencv.highgui.HighGui;
 import org.opencv.imgcodecs.Imgcodecs;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 import org.springframework.util.StopWatch;
 
 import java.io.IOException;
@@ -36,28 +34,46 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * An example of inference using an object detection model.
- *
- * <p>See this <a
- * href="https://github.com/deepjavalibrary/djl/blob/master/examples/docs/object_detection.md">doc</a>
- * for information about this example.
+ * @author hundanli
+ * @version 1.0.0
+ * @date 2023/3/4 13:07
  */
-public final class YoloV5OnnxTest {
+@Slf4j
+@Service
+public class OnnxObjectDetectService implements ObjectDetectService {
 
-    private static final Logger logger = LoggerFactory.getLogger(YoloV5OnnxTest.class);
     private final String userDir = System.getProperty("user.dir");
 
-    @BeforeEach
-    void init() throws Exception {
-        Loader.load(opencv_java.class);
+    private ZooModel<Image, DetectedObjects> model;
+
+    /**
+     * 检测Image图像
+     *
+     * @param image 图片对象
+     * @return 检测结果
+     */
+    @Override
+    public DetectResultDTO detectObject(Image image) throws Exception {
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start("object detection");
+        try (Predictor<Image, DetectedObjects> predictor = this.model.newPredictor()) {
+            log.info("Start to detect objects from image.");
+            DetectedObjects detectedObjects = predictor.predict(image);
+            stopWatch.stop();
+            long timeMillis = stopWatch.getTotalTimeMillis();
+            log.info("Detection task cost time: {}ms", timeMillis);
+            log.info("Detection result:{}", detectedObjects);
+            Path boxImage = saveBoundingBoxImage(image, detectedObjects);
+            DetectResultDTO detectResultDTO = new DetectResultDTO();
+            detectResultDTO.setDetectedObjects(detectedObjects);
+            detectResultDTO.setBoxImage(boxImage);
+            return detectResultDTO;
+        }
     }
 
-    @Test
-    public void predict() throws IOException, ModelException, TranslateException {
-        Path imageFile = Paths.get("src/main/resources/static/dog_bike_car.jpg");
-        Image img = ImageFactory.getInstance().fromFile(imageFile);
 
-        Engine.getAllEngines().forEach(System.out::println);
+    @PostConstruct
+    void init() throws Exception {
 
         YoloV5Translator translator = YoloV5Translator.builder()
                 .optOutputType(YoloV5Translator.YoloOutputType.AUTO)
@@ -70,27 +86,20 @@ public final class YoloV5OnnxTest {
                         .setTypes(Image.class, DetectedObjects.class)
                         .optTranslator(translator)
                         .optDevice(Device.cpu())
-                        .optModelPath(Paths.get(userDir,"src/main/resources/weights"))
+                        .optModelPath(Paths.get(userDir, "src/main/resources/weights"))
                         .optModelName("yolov5n6")
                         .optEngine("OnnxRuntime")
                         .optProgress(new ProgressBar())
                         .build();
 
-        try (ZooModel<Image, DetectedObjects> model = criteria.loadModel()) {
-            logger.info("ModelName：{}, modelPath: {}", model.getName(), model.getModelPath());
-            StopWatch stopWatch = new StopWatch();
-            stopWatch.start("object detection");
-            try (Predictor<Image, DetectedObjects> predictor = model.newPredictor()) {
-                logger.info("Start to detect objects from image: {}", imageFile);
-                DetectedObjects detectedObjects = predictor.predict(img);
-                stopWatch.stop();
-                long timeMillis = stopWatch.getTotalTimeMillis();
-                logger.info("Detection task cost time: {}ms", timeMillis);
-                logger.info("Detection result:{}", detectedObjects);
-                Path boxingPath = saveBoundingBoxImage(img, detectedObjects);
-                HighGui.imshow("detectedObjects", Imgcodecs.imread(boxingPath.toFile().getAbsolutePath(), Imgcodecs.IMREAD_COLOR));
-                HighGui.waitKey();
-            }
+        this.model = criteria.loadModel();
+        log.info("Loading Onnx Model, ModelName：{}, modelPath: {}", model.getName(), model.getModelPath());
+    }
+
+    @PreDestroy
+    void destroy() {
+        if (this.model != null) {
+            this.model.close();
         }
     }
 
@@ -110,7 +119,7 @@ public final class YoloV5OnnxTest {
             BoundingBox box = result.getBoundingBox();
 
             Rectangle rectangle = box.getBounds();
-            double x =  (rectangle.getX() / imageWidth);
+            double x = (rectangle.getX() / imageWidth);
             double y = (rectangle.getY() / imageHeight);
             double width = rectangle.getWidth() / imageWidth;
             double height = rectangle.getHeight() / imageHeight;
@@ -122,11 +131,12 @@ public final class YoloV5OnnxTest {
         }
         DetectedObjects detectedObjects = new DetectedObjects(classNames, probabilities, boundingBoxes);
         img.drawBoundingBoxes(detectedObjects);
-
-        Path imagePath = outputDir.resolve("onnx-detected-dog_bike_car.png");
+        long nanoTime = System.nanoTime();
+        Path imagePath = outputDir.resolve(nanoTime + "-onnx-detected.png");
         // OpenJDK can't save jpg with alpha channel
         img.save(Files.newOutputStream(imagePath), "png");
-        logger.info("Detected objects image has been saved in: {}", imagePath);
+        log.info("Detected objects image has been saved in: {}", imagePath);
         return imagePath;
     }
+
 }

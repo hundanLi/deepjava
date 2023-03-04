@@ -45,6 +45,8 @@ public final class YoloV5BenchTest {
 
     private static final Logger logger = LoggerFactory.getLogger(YoloV5BenchTest.class);
 
+    private final String userDir = System.getProperty("user.dir");
+
     @BeforeEach
     void init() throws Exception {
         Loader.load(opencv_java.class);
@@ -52,7 +54,7 @@ public final class YoloV5BenchTest {
 
     @Test
     public void predict() throws IOException, ModelException, TranslateException {
-        Path imageFile = Paths.get("src/test/resources/dog_bike_car.jpg");
+        Path imageFile = Paths.get("src/main/resources/static/dog_bike_car.jpg");
         Image img = ImageFactory.getInstance().fromFile(imageFile);
 
         Engine.getAllEngines().forEach(System.out::println);
@@ -68,7 +70,7 @@ public final class YoloV5BenchTest {
                         .setTypes(Image.class, DetectedObjects.class)
                         .optTranslator(translator)
                         .optDevice(Device.cpu())
-                        .optModelPath(Paths.get("D:\\developer\\project\\Learning\\deepjava\\src\\test\\resources"))
+                        .optModelPath(Paths.get(userDir,"src/main/resources/weights"))
                         .optModelName("yolov5n6")
 //                        .optEngine("PyTorch")
                         .optEngine("OnnxRuntime")
@@ -107,7 +109,7 @@ public final class YoloV5BenchTest {
 
         YoloV5Translator translator = YoloV5Translator.builder()
                 .optOutputType(YoloV5Translator.YoloOutputType.AUTO)
-                .optSynsetArtifactName("coco.names")
+                .optSynsetArtifactName("weights/coco.names")
                 .addTransform(new Resize(640, 640))
 //                .addTransform(new ToTensor())
                 .build();
@@ -161,7 +163,7 @@ public final class YoloV5BenchTest {
 
         YoloV5Translator translator = YoloV5Translator.builder()
                 .optOutputType(YoloV5Translator.YoloOutputType.AUTO)
-                .optSynsetArtifactName("coco.names")
+                .optSynsetArtifactName("weights/coco.names")
                 .addTransform(new Resize(640, 640))
                 .addTransform(new ToTensor()).build();
         Criteria<Image, DetectedObjects> criteria =
@@ -230,7 +232,7 @@ public final class YoloV5BenchTest {
         DetectedObjects detectedObjects = new DetectedObjects(classNames, probabilities, boundingBoxes);
         img.drawBoundingBoxes(detectedObjects);
 
-        Path imagePath = outputDir.resolve("detected-dog_bike_car.png");
+        Path imagePath = outputDir.resolve("bench-detected-dog_bike_car.png");
         // OpenJDK can't save jpg with alpha channel
         img.save(Files.newOutputStream(imagePath), "png");
         logger.info("Detected objects image has been saved in: {}", imagePath);
