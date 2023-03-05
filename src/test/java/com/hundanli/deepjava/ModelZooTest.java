@@ -7,6 +7,7 @@ import ai.djl.repository.zoo.ModelZoo;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.List;
 import java.util.Map;
 
@@ -18,16 +19,15 @@ import java.util.Map;
 public class ModelZooTest {
 
     @Test
-    void listModels() throws ModelNotFoundException, IOException {
+    void listModels() throws Exception {
         Map<Application, List<Artifact>> models = ModelZoo.listModels();
         models.forEach((app, artifacts) -> {
             System.out.println(app.getPath());
-            if (!app.getPath().endsWith("object_detection")) {
+            if (!app.getPath().endsWith("image_classification")) {
                 return;
             }
             for (Artifact artifact : artifacts) {
-                System.out.println(artifact.getName() + ": " + artifact.getResourceUri().toString());
-
+                System.out.println(artifact.getName() + ":" + artifact);
             }
 
             System.out.println("==============");
