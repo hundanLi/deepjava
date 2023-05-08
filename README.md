@@ -3,5 +3,5 @@
 Including Tasks:
 - Object Detection
 - Image Classification
-- Audio Classification
-- Speech Recognition
+- Face Detection
+- Action Recognition

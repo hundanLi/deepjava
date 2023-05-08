@@ -17,12 +17,47 @@
         <java.version>17</java.version>
         <javacv.version>1.5.7</javacv.version>
         <opencv.version>4.5.5-1.5.7</opencv.version>
+        <cpython.version>3.10.2-1.5.7</cpython.version>
         <ffpmeg.version>5.0-1.5.7</ffpmeg.version>
         <djl.version>0.20.0</djl.version>
         <pytorch-jni.version>1.13.0-0.20.0</pytorch-jni.version>
         <pytorch-native.version>1.13.0</pytorch-native.version>
     </properties>
     <dependencies>
+
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>numpy</artifactId>
+            <version>1.22.2-1.5.7</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>numpy</artifactId>
+            <version>1.22.2-1.5.7</version>
+            <classifier>windows-x86_64</classifier>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>cpython</artifactId>
+            <version>${cpython.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>cpython</artifactId>
+            <version>${cpython.version}</version>
+            <classifier>linux-x86_64</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>cpython</artifactId>
+            <version>${cpython.version}</version>
+            <classifier>windows-x86_64</classifier>
+        </dependency>
+
+
 
         <dependency>
             <groupId>commons-io</groupId>

@@ -23,9 +23,9 @@ public class ModelZooTest {
         Map<Application, List<Artifact>> models = ModelZoo.listModels();
         models.forEach((app, artifacts) -> {
             System.out.println(app.getPath());
-            if (!app.getPath().endsWith("image_classification")) {
-                return;
-            }
+//            if (!app.getPath().endsWith("image_classification")) {
+//                return;
+//            }
             for (Artifact artifact : artifacts) {
                 System.out.println(artifact.getName() + ":" + artifact);
             }
